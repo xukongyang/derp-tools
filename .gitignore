@@ -1,0 +1,11 @@
+# The patched tailscale checkout: its auth-patch branch is pushed to
+# the fork (github.com/xukongyang/tailscale), patches/ is the truth.
+/tailscale/
+# Build artifacts.
+/derper
+/admit-server
+# Local secrets and test credentials.
+users.txt
+*.key
+*.log
+/testdata/certs/

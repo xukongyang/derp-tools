@@ -1,0 +1,18 @@
+{
+  "Regions": {
+    "900": {
+      "RegionID": 900,
+      "RegionCode": "e2e",
+      "RegionName": "E2E Local",
+      "Nodes": [{
+        "Name": "900a",
+        "RegionID": 900,
+        "HostName": "local",
+        "IPv4": "127.0.0.1",
+        "InsecureForTests": true,
+        "STUNPort": -1,
+        "DERPPort": 14433
+      }]
+    }
+  }
+}
