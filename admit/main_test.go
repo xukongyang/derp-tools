@@ -78,8 +78,12 @@ func TestParseUsers(t *testing.T) {
 }
 
 func TestHandleAdmit(t *testing.T) {
-	users := map[string]string{"alice": "alice-secret"}
-	srv := &server{users: users, logf: func(string, ...any) {}}
+	dir := t.TempDir()
+	path := filepath.Join(dir, "users.txt")
+	if err := os.WriteFile(path, []byte("alice:alice-secret\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	srv := &server{usersPath: path, logf: func(string, ...any) {}}
 	ts := httptest.NewServer(http.HandlerFunc(srv.handleAdmit))
 	defer ts.Close()
 
@@ -138,5 +142,64 @@ func TestHandleAdmit(t *testing.T) {
 	resp4.Body.Close()
 	if resp4.StatusCode != http.StatusMethodNotAllowed {
 		t.Errorf("GET: status = %d; want 405", resp4.StatusCode)
+	}
+}
+
+// TestHotReload verifies mtime-based lazy reloading: edits to
+// users.txt take effect on the next admission check without a
+// restart, and a broken file keeps the last good table serving.
+func TestHotReload(t *testing.T) {
+	dir := t.TempDir()
+	path := filepath.Join(dir, "users.txt")
+	if err := os.WriteFile(path, []byte("alice:s1\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	srv := &server{usersPath: path}
+	ts := httptest.NewServer(http.HandlerFunc(srv.handleAdmit))
+	defer ts.Close()
+	w := time.Now().Unix() / windowSecs
+	try := func(secret string) bool {
+		body, _ := json.Marshal(admitRequest{
+			NodePublic: "nodekey:abc",
+			Source:     "203.0.113.9",
+			Username:   "alice",
+			AuthHash:   authHash([]byte(secret), "alice", w),
+		})
+		resp, err := http.Post(ts.URL, "application/json", strings.NewReader(string(body)))
+		if err != nil {
+			t.Fatal(err)
+		}
+		defer resp.Body.Close()
+		return resp.StatusCode == http.StatusOK
+	}
+
+	if !try("s1") {
+		t.Fatal("initial table: alice with s1 rejected")
+	}
+
+	// Rotate the secret: the next check picks up the new table.
+	if err := os.WriteFile(path, []byte("alice:s2\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	future := time.Now().Add(time.Minute)
+	if err := os.Chtimes(path, future, future); err != nil {
+		t.Fatal(err)
+	}
+	if try("s1") {
+		t.Error("old secret s1 still accepted after reload")
+	}
+	if !try("s2") {
+		t.Error("new secret s2 rejected after reload")
+	}
+
+	// A broken file keeps the last good table serving.
+	if err := os.WriteFile(path, []byte("broken-no-colon\n"), 0o600); err != nil {
+		t.Fatal(err)
+	}
+	if err := os.Chtimes(path, future.Add(time.Minute), future.Add(time.Minute)); err != nil {
+		t.Fatal(err)
+	}
+	if !try("s2") {
+		t.Error("broken users file took the old table out of service")
 	}
 }

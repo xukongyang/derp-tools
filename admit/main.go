@@ -37,6 +37,7 @@ import (
 	"net/http"
 	"os"
 	"strings"
+	"sync"
 	"time"
 )
 
@@ -75,6 +76,10 @@ func main() {
 	}
 
 	if *gen {
+		users, err := readUsers(*usersFile)
+		if err != nil {
+			log.Fatalf("reading users: %v", err)
+		}
 		secret, ok := users[*user]
 		if !ok {
 			log.Fatalf("user %q is not in %v", *user, *usersFile)
@@ -83,8 +88,13 @@ func main() {
 		return
 	}
 
-	srv := &server{users: users, logf: log.Printf}
-	log.Printf("admit: serving %d user(s) on %s", len(users), *listen)
+	srv := &server{usersPath: *usersFile, logf: log.Printf}
+	if n := len(srv.getUsers()); n == 0 {
+		log.Fatalf("no users loaded from %v", *usersFile)
+	} else {
+		log.Printf("admit: loaded %d user(s); edits to the users file take effect without a restart", n)
+	}
+	log.Printf("admit: serving on %s", *listen)
 	log.Fatal(http.ListenAndServe(*listen, http.HandlerFunc(srv.handleAdmit)))
 }
 
@@ -116,10 +126,48 @@ func check(users map[string]string, username, token string, now int64) bool {
 	return false
 }
 
-// server is the admission controller's HTTP state.
+// server is the admission controller's HTTP state. The users file is
+// lazily reloaded whenever its mtime changes, so edits to users.txt
+// take effect on the next admission check without a restart.
 type server struct {
-	users map[string]string
-	logf  func(format string, args ...any)
+	usersPath string
+	mu        sync.Mutex
+	users     map[string]string // last successfully loaded table
+	usersMod  time.Time         // mtime of the file that produced users
+	logf      func(format string, args ...any)
+}
+
+// getUsers returns the current user table, re-reading the users file
+// when its mtime changed since the last load. If the file is missing,
+// unreadable, or malformed, the last good table keeps serving and the
+// problem is only logged: a broken edit should not take admission
+// down.
+func (s *server) getUsers() map[string]string {
+	s.mu.Lock()
+	defer s.mu.Unlock()
+	fi, err := os.Stat(s.usersPath)
+	if err != nil {
+		if s.logf != nil {
+			s.logf("admit: stat %v: %v; serving the last loaded table", s.usersPath, err)
+		}
+		return s.users
+	}
+	if fi.ModTime().Equal(s.usersMod) {
+		return s.users
+	}
+	users, err := readUsers(s.usersPath)
+	if err != nil {
+		if s.logf != nil {
+			s.logf("admit: reloading %v: %v; serving the last loaded table", s.usersPath, err)
+		}
+		return s.users
+	}
+	s.users = users
+	s.usersMod = fi.ModTime()
+	if s.logf != nil {
+		s.logf("admit: users reloaded: %d user(s)", len(users))
+	}
+	return s.users
 }
 
 // handleAdmit implements the derper admission protocol: POST with
@@ -136,7 +184,7 @@ func (s *server) handleAdmit(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "bad request body", http.StatusBadRequest)
 		return
 	}
-	allowed := check(s.users, req.Username, req.AuthHash, time.Now().Unix())
+	allowed := check(s.getUsers(), req.Username, req.AuthHash, time.Now().Unix())
 	if s.logf != nil {
 		s.logf("admit: user=%q key=%v source=%v -> %v", req.Username, req.NodePublic, req.Source, allowed)
 	}
