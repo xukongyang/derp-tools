@@ -1,4 +1,4 @@
-From bdf33b674975217201c51770410a6a4e886fdba9 Mon Sep 17 00:00:00 2001
+From e140a45337346f1438a2514a9054f891624f4b78 Mon Sep 17 00:00:00 2001
 From: xukongyang <xukongyang@gmail.com>
 Date: Mon, 21 Sep 2026 11:59:41 +0800
 Subject: [PATCH 2/3] wgengine/magicsock: add Conn.SetDERPAuth for admission
@@ -52,7 +52,7 @@ index 020116228..77f1ca88d 100644
  // ReSTUN after updating the map.
  //
 diff --git a/wgengine/magicsock/magicsock.go b/wgengine/magicsock/magicsock.go
-index 89b3bce96..d08a5b3d3 100644
+index ff3829de3..ce2181727 100644
 --- a/wgengine/magicsock/magicsock.go
 +++ b/wgengine/magicsock/magicsock.go
 @@ -253,6 +253,12 @@ type Conn struct {
