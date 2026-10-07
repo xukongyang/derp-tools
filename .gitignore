@@ -4,8 +4,10 @@
 # Build artifacts.
 /derper
 /admit-server
+/admit-server-sqlite
 # Local secrets and test credentials.
 users.txt
+net2local.db
 *.key
 *.log
 /testdata/certs/
