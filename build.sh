@@ -17,7 +17,7 @@
 set -e
 cd "$(dirname "$0")"
 
-TAILSCALE_COMMIT=${TAILSCALE_COMMIT:-a2263542f260}  # keep in sync with tailcat/go.mod
+TAILSCALE_COMMIT=${TAILSCALE_COMMIT:-4862f5f46}  # keep in sync with tailcat/go.mod
 
 if [ ! -d tailscale/.git ]; then
 	git clone --filter=blob:none https://github.com/tailscale/tailscale.git tailscale

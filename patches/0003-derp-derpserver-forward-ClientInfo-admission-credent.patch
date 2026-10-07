@@ -1,4 +1,4 @@
-From 24fac3733bc8d0eacc57c20c799b87855e0849c2 Mon Sep 17 00:00:00 2001
+From cb30518e50c9d2271896ab9aba26a03069827fe7 Mon Sep 17 00:00:00 2001
 From: xukongyang <xukongyang@gmail.com>
 Date: Mon, 21 Sep 2026 11:59:41 +0800
 Subject: [PATCH 3/3] derp/derpserver: forward ClientInfo admission credentials

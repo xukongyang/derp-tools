@@ -1,4 +1,4 @@
-From e140a45337346f1438a2514a9054f891624f4b78 Mon Sep 17 00:00:00 2001
+From 430329ca00d93a0377c84594acca83ee0b36b134 Mon Sep 17 00:00:00 2001
 From: xukongyang <xukongyang@gmail.com>
 Date: Mon, 21 Sep 2026 11:59:41 +0800
 Subject: [PATCH 2/3] wgengine/magicsock: add Conn.SetDERPAuth for admission
