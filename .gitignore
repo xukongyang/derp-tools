@@ -5,6 +5,7 @@
 /derper
 /admit-server
 /admit-server-sqlite
+/dist
 # Local secrets and test credentials.
 users.txt
 net2local.db
