@@ -6,6 +6,7 @@
 /admit-server
 /admit-server-sqlite
 /dist
+*.exe
 # Local secrets and test credentials.
 users.txt
 net2local.db
