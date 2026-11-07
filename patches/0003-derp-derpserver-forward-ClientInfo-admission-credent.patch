@@ -1,4 +1,4 @@
-From 721987dc4146fec4bc53062f459525b16a7518b2 Mon Sep 17 00:00:00 2001
+From 51cf14c921d9c9a8f371960fb824f6c43fdd324f Mon Sep 17 00:00:00 2001
 From: xukongyang <xukongyang@gmail.com>
 Date: Mon, 21 Sep 2026 11:59:41 +0800
 Subject: [PATCH 3/4] derp/derpserver: forward ClientInfo admission credentials
@@ -14,10 +14,10 @@ omitted, and older controllers ignore unknown JSON fields.
  1 file changed, 15 insertions(+), 3 deletions(-)
 
 diff --git a/derp/derpserver/derpserver.go b/derp/derpserver/derpserver.go
-index aeb59247a..59dd5aafd 100644
+index a0fa46a3d..3b683f024 100644
 --- a/derp/derpserver/derpserver.go
 +++ b/derp/derpserver/derpserver.go
-@@ -1813,9 +1813,21 @@ func (s *Server) verifyClient(ctx context.Context, clientKey key.NodePublic, inf
+@@ -1829,9 +1829,21 @@ func (s *Server) verifyClient(ctx context.Context, clientKey key.NodePublic, inf
  		ctx, cancel := context.WithTimeout(ctx, 5*time.Second)
  		defer cancel()
  
